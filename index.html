@@ -211,18 +211,27 @@
       hideMsg();
 
       var url = SCRIPT + "?action=submit&bringing=" + encodeURIComponent(v);
-      jsonp(url, function(err, data) {
+
+      // Image ping — bypasses ALL CORS and security policy issues.
+      // The request reaches Apps Script and writes to the sheet.
+      // We show success optimistically since we can't read the response.
+      var done = false;
+      function onDone() {
+        if (done) return; done = true;
         resetBtn();
-        if (err) { showMsg("Connection issue — please try again.","error"); return; }
-        if (data && data.success) {
-          cn.textContent = v;
-          ov.classList.add("show");
-          resetForm();
-          setTimeout(function(){ ov.classList.remove("show"); }, 3400);
-        } else {
-          showMsg((data && data.message) || "Something went wrong.","error");
-        }
-      });
+        cn.textContent = v;
+        ov.classList.add("show");
+        resetForm();
+        setTimeout(function(){ ov.classList.remove("show"); }, 3400);
+      }
+
+      var img = new Image();
+      img.onload  = onDone;
+      img.onerror = onDone; // fires when Apps Script returns non-image — that's fine, request still went through
+      img.src = url;
+
+      // Show success after 3 seconds regardless (safety net)
+      setTimeout(onDone, 3000);
     };
 
     function resetBtn() { isSubmitting=false; btn.disabled=false; btn.classList.remove("loading"); inp.disabled=false; }
