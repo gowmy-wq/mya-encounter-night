@@ -19,15 +19,15 @@
     }
     html, body { width:100%; height:100%; overflow:hidden; background:var(--green); -webkit-font-smoothing:antialiased; user-select:none; }
     #bg { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 55% 50% at 15% 18%, rgba(245,245,233,0.22) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 85% 82%, rgba(0,0,0,0.06) 0%, transparent 55%), var(--green); }
-    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:70px; background:var(--cream); border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 48px; }
-    .hl { font-family:var(--font-d); font-weight:700; font-size:18px; letter-spacing:0.28em; text-transform:uppercase; color:var(--black); }
-    .hc { font-family:var(--font-b); font-style:italic; font-size:20px; color:var(--black); opacity:0.7; }
-    .hr { font-family:var(--font-d); font-size:13px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); opacity:0.5; }
-    #orbitCanvas { position:fixed; top:70px; left:0; right:0; bottom:0; z-index:10; pointer-events:none; }
-    #qrCorner { position:fixed; bottom:28px; left:36px; z-index:50; background:var(--cream); border:2px solid var(--black); border-radius:12px; padding:14px 14px 11px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:9px; }
-    #qrCanvas canvas, #qrCanvas img { display:block; width:110px !important; height:110px !important; border-radius:4px; }
-    #qrLabel { font-family:var(--font-d); font-size:9px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); text-align:center; }
-    #qrSub   { font-family:var(--font-b); font-style:italic; font-size:11px; color:var(--black); opacity:0.55; text-align:center; }
+    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:90px; background:var(--cream); border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 60px; }
+    .hl { font-family:var(--font-d); font-weight:700; font-size:26px; letter-spacing:0.28em; text-transform:uppercase; color:var(--black); }
+    .hc { font-family:var(--font-b); font-style:italic; font-size:28px; color:var(--black); opacity:0.7; }
+    .hr { font-family:var(--font-d); font-size:18px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); opacity:0.5; }
+    #orbitCanvas { position:fixed; top:90px; left:0; right:0; bottom:0; z-index:10; pointer-events:none; }
+    #qrCorner { position:fixed; bottom:36px; left:44px; z-index:50; background:var(--cream); border:2px solid var(--black); border-radius:12px; padding:18px 18px 14px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:10px; }
+    #qrCanvas canvas, #qrCanvas img { display:block; width:160px !important; height:160px !important; border-radius:4px; }
+    #qrLabel { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); text-align:center; }
+    #qrSub   { font-family:var(--font-b); font-style:italic; font-size:14px; color:var(--black); opacity:0.55; text-align:center; }
     #badge   { position:fixed; bottom:28px; right:36px; z-index:50; display:flex; align-items:center; gap:10px; opacity:0.4; }
     .bl { width:24px; height:2px; background:var(--black); }
     .bt { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:0.3em; text-transform:uppercase; color:var(--black); }
@@ -97,11 +97,11 @@
 
   // ── CONFIG ────────────────────────────────────────────────
   var CFG = {
-    POLL_MS: 15000, MAX:90, HDR:70,
+    POLL_MS: 15000, MAX:90, HDR:90,
     RINGS:[
-      {rxF:0.22,ryF:0.16,spd:0.0018,max:7, fs:32,bold:true, italic:false},
-      {rxF:0.37,ryF:0.27,spd:0.0012,max:13,fs:26,bold:false,italic:true },
-      {rxF:0.52,ryF:0.37,spd:0.0008,max:22,fs:21,bold:false,italic:false}
+      {rxF:0.22,ryF:0.16,spd:0.0018,max:7, fs:48,bold:true, italic:false},
+      {rxF:0.37,ryF:0.27,spd:0.0012,max:13,fs:38,bold:false,italic:true },
+      {rxF:0.52,ryF:0.37,spd:0.0008,max:22,fs:30,bold:false,italic:false}
     ],
     L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night"
   };
@@ -147,12 +147,12 @@
 
   function drawCenter(a){
     cx.save();cx.globalAlpha=a;cx.textAlign="center";cx.textBaseline="middle";
-    var ms=Math.min(W*0.07,H*0.13,88);
+    var ms=Math.min(W*0.1,H*0.18,140);
     cx.font="700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
     cx.fillStyle="#000";var lh=ms*1.12;
     cx.fillText(CFG.L1,CX,CY-lh*0.54);cx.fillText(CFG.L2,CX,CY+lh*0.54);
     var rw=cx.measureText(CFG.L2).width*0.8;cx.fillStyle="#f5f5e9";cx.globalAlpha=a*0.7;cx.fillRect(CX-rw/2,CY+lh*1.08,rw,2.5);
-    var ss=Math.min(W*0.022,H*0.036,26);cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";cx.fillStyle="#000";cx.globalAlpha=a*0.5;cx.fillText(CFG.SUB,CX,CY+lh*1.6);
+    var ss=Math.min(W*0.03,H*0.05,40);cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";cx.fillStyle="#000";cx.globalAlpha=a*0.5;cx.fillText(CFG.SUB,CX,CY+lh*1.6);
     cx.restore();
   }
 
