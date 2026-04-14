@@ -18,28 +18,13 @@
       --font-b: "Adobe Aldine Caption","EB Garamond","Garamond",Georgia,serif;
     }
     html, body { width:100%; height:100%; overflow:hidden; background:var(--green); -webkit-font-smoothing:antialiased; user-select:none; }
-    #bg {
-      position:fixed; inset:0; z-index:0;
-      background:
-        radial-gradient(ellipse 55% 50% at 15% 18%, rgba(245,245,233,0.22) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 45% at 85% 82%, rgba(0,0,0,0.06) 0%, transparent 55%),
-        var(--green);
-    }
-    #header {
-      position:fixed; top:0; left:0; right:0; z-index:40; height:70px;
-      background:var(--cream); border-bottom:2.5px solid var(--black);
-      display:flex; align-items:center; justify-content:space-between; padding:0 48px;
-    }
+    #bg { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 55% 50% at 15% 18%, rgba(245,245,233,0.22) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 85% 82%, rgba(0,0,0,0.06) 0%, transparent 55%), var(--green); }
+    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:70px; background:var(--cream); border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 48px; }
     .hl { font-family:var(--font-d); font-weight:700; font-size:18px; letter-spacing:0.28em; text-transform:uppercase; color:var(--black); }
     .hc { font-family:var(--font-b); font-style:italic; font-size:20px; color:var(--black); opacity:0.7; }
     .hr { font-family:var(--font-d); font-size:13px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); opacity:0.5; }
     #orbitCanvas { position:fixed; top:70px; left:0; right:0; bottom:0; z-index:10; pointer-events:none; }
-    #qrCorner {
-      position:fixed; bottom:28px; left:36px; z-index:50;
-      background:var(--cream); border:2px solid var(--black); border-radius:12px;
-      padding:14px 14px 11px; box-shadow:4px 4px 0 var(--black);
-      display:flex; flex-direction:column; align-items:center; gap:9px;
-    }
+    #qrCorner { position:fixed; bottom:28px; left:36px; z-index:50; background:var(--cream); border:2px solid var(--black); border-radius:12px; padding:14px 14px 11px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:9px; }
     #qrCanvas canvas, #qrCanvas img { display:block; width:110px !important; height:110px !important; border-radius:4px; }
     #qrLabel { font-family:var(--font-d); font-size:9px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); text-align:center; }
     #qrSub   { font-family:var(--font-b); font-style:italic; font-size:11px; color:var(--black); opacity:0.55; text-align:center; }
@@ -67,173 +52,146 @@
   </div>
 
   <script>
-  // ── YOUR APPS SCRIPT URL ────────────────────────────────────
-  var SCRIPT = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
-
-  // ── QR CODE ─────────────────────────────────────────────────
-  // Points to this same Netlify site's submit page (root URL)
+  var SCRIPT     = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
   var SUBMIT_URL = window.location.origin + "/";
+
+  // ── QR CODE ───────────────────────────────────────────────
   try {
     new QRCode(document.getElementById("qrCanvas"), {
-      text: SUBMIT_URL, width:220, height:220,
+      text:SUBMIT_URL, width:220, height:220,
       colorDark:"#000000", colorLight:"#f5f5e9",
-      correctLevel: QRCode.CorrectLevel.H
+      correctLevel:QRCode.CorrectLevel.H
     });
   } catch(e) { document.getElementById("qrCorner").style.display="none"; }
 
-  // ── CONFIG ──────────────────────────────────────────────────
+  // ── JSONP helper ──────────────────────────────────────────
+  function jsonp(url, callback) {
+    var cbName = "mya_cb_" + Date.now();
+    var script = document.createElement("script");
+    var done   = false;
+
+    window[cbName] = function(data) {
+      if (done) return; done=true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      callback(null, data);
+    };
+    script.onerror = function() {
+      if (done) return; done=true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      callback(new Error("failed"), null);
+    };
+    setTimeout(function() {
+      if (!done) {
+        done=true; delete window[cbName];
+        try { document.head.removeChild(script); } catch(e) {}
+        callback(new Error("timeout"), null);
+      }
+    }, 10000);
+
+    script.src = url + "&callback=" + cbName;
+    document.head.appendChild(script);
+  }
+
+  // ── CONFIG ────────────────────────────────────────────────
   var CFG = {
-    POLL_MS:  15000,
-    MAX:      90,
-    HDR:      70,
-    RINGS: [
-      { rxF:0.22, ryF:0.16, spd:0.0018, max:7,  fs:32, bold:true,  italic:false },
-      { rxF:0.37, ryF:0.27, spd:0.0012, max:13, fs:26, bold:false, italic:true  },
-      { rxF:0.52, ryF:0.37, spd:0.0008, max:22, fs:21, bold:false, italic:false }
+    POLL_MS: 15000, MAX:90, HDR:70,
+    RINGS:[
+      {rxF:0.22,ryF:0.16,spd:0.0018,max:7, fs:32,bold:true, italic:false},
+      {rxF:0.37,ryF:0.27,spd:0.0012,max:13,fs:26,bold:false,italic:true },
+      {rxF:0.52,ryF:0.37,spd:0.0008,max:22,fs:21,bold:false,italic:false}
     ],
-    L1:  "WHO ARE YOU",
-    L2:  "BRINGING?",
-    SUB: "MYA  ·  Encounter Night"
+    L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night"
   };
 
-  var S = { names:[], rings:[], phase:"idle", poll:null, af:null, idle:0 };
-  var cv = document.getElementById("orbitCanvas");
-  var cx = cv.getContext("2d");
-  var W, H, CX, CY;
+  var S={names:[],rings:[],phase:"idle",poll:null,af:null,idle:0};
+  var cv=document.getElementById("orbitCanvas");
+  var cx=cv.getContext("2d");
+  var W,H,CX,CY;
 
-  function resize() {
-    W=window.innerWidth; H=window.innerHeight-CFG.HDR;
-    cv.width=W; cv.height=H; CX=W/2; CY=H/2; rebuildRings();
-  }
+  function resize(){W=window.innerWidth;H=window.innerHeight-CFG.HDR;cv.width=W;cv.height=H;CX=W/2;CY=H/2;rebuildRings();}
 
-  function initRings() {
-    S.rings = CFG.RINGS.map(function(c){ return {cfg:c,items:[],angle:0}; });
-  }
+  function initRings(){S.rings=CFG.RINGS.map(function(c){return{cfg:c,items:[],angle:0};});}
 
-  function rebuildRings() {
-    if (!S.rings.length) { initRings(); return; }
+  function rebuildRings(){
+    if(!S.rings.length){initRings();return;}
     var all=[];
-    S.rings.forEach(function(r){ r.items.forEach(function(i){ all.push(i.name); }); r.items=[]; });
+    S.rings.forEach(function(r){r.items.forEach(function(i){all.push(i.name);});r.items=[];});
     all.forEach(addToRing);
   }
 
-  function addToRing(name) {
-    var best=null, room=-1;
-    S.rings.forEach(function(r){ var sp=r.cfg.max-r.items.length; if(sp>room){room=sp;best=r;} });
-    if (!best||room<=0) { var o=S.rings[S.rings.length-1]; o.items.shift(); best=o; }
-    best.items.push({name:name, angle:0});
-    respace(best);
+  function addToRing(name){
+    var best=null,room=-1;
+    S.rings.forEach(function(r){var sp=r.cfg.max-r.items.length;if(sp>room){room=sp;best=r;}});
+    if(!best||room<=0){var o=S.rings[S.rings.length-1];o.items.shift();best=o;}
+    best.items.push({name:name,angle:0});respace(best);
   }
 
-  function respace(r) {
-    var n=r.items.length;
-    for (var i=0;i<n;i++) r.items[i].angle=r.angle+(i/n)*Math.PI*2;
-  }
+  function respace(r){var n=r.items.length;for(var i=0;i<n;i++)r.items[i].angle=r.angle+(i/n)*Math.PI*2;}
 
-  function updateNames(fresh) {
-    var ex={};
-    S.names.forEach(function(n){ ex[n.toLowerCase()]=true; });
-    fresh.forEach(function(n){ if(!ex[n.toLowerCase()]){ ex[n.toLowerCase()]=true; addToRing(n); } });
+  function updateNames(fresh){
+    var ex={};S.names.forEach(function(n){ex[n.toLowerCase()]=true;});
+    fresh.forEach(function(n){if(!ex[n.toLowerCase()]){ex[n.toLowerCase()]=true;addToRing(n);}});
     S.names=fresh.slice(0,CFG.MAX);
   }
 
-  // ── DRAW ───────────────────────────────────────────────────
-  function draw() {
-    cx.clearRect(0,0,W,H);
-    if (S.phase==="idle") drawIdle(); else { drawOrbits(); drawCenter(1); }
-    S.af=requestAnimationFrame(draw);
-  }
+  function draw(){cx.clearRect(0,0,W,H);if(S.phase==="idle")drawIdle();else{drawOrbits();drawCenter(1);}S.af=requestAnimationFrame(draw);}
 
-  function drawIdle() {
-    S.idle+=0.008;
-    var p=(Math.sin(S.idle)+1)/2;
-    for (var r=0;r<3;r++) {
-      var rd=100+r*80+p*25, al=(0.2-r*0.06)*(0.5+p*0.5);
-      cx.beginPath(); cx.ellipse(CX,CY,rd*1.65,rd*0.9,0,0,Math.PI*2);
-      cx.strokeStyle="rgba(245,245,233,"+al+")"; cx.lineWidth=1.5; cx.stroke();
-    }
+  function drawIdle(){
+    S.idle+=0.008;var p=(Math.sin(S.idle)+1)/2;
+    for(var r=0;r<3;r++){var rd=100+r*80+p*25,al=(0.2-r*0.06)*(0.5+p*0.5);cx.beginPath();cx.ellipse(CX,CY,rd*1.65,rd*0.9,0,0,Math.PI*2);cx.strokeStyle="rgba(245,245,233,"+al+")";cx.lineWidth=1.5;cx.stroke();}
     drawCenter(0.5+p*0.3);
   }
 
-  function drawCenter(a) {
-    cx.save(); cx.globalAlpha=a;
-    cx.textAlign="center"; cx.textBaseline="middle";
+  function drawCenter(a){
+    cx.save();cx.globalAlpha=a;cx.textAlign="center";cx.textBaseline="middle";
     var ms=Math.min(W*0.07,H*0.13,88);
     cx.font="700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
-    cx.fillStyle="#000";
-    var lh=ms*1.12;
-    cx.fillText(CFG.L1,CX,CY-lh*0.54);
-    cx.fillText(CFG.L2,CX,CY+lh*0.54);
-    var rw=cx.measureText(CFG.L2).width*0.8;
-    cx.fillStyle="#f5f5e9"; cx.globalAlpha=a*0.7;
-    cx.fillRect(CX-rw/2,CY+lh*1.08,rw,2.5);
-    var ss=Math.min(W*0.022,H*0.036,26);
-    cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";
-    cx.fillStyle="#000"; cx.globalAlpha=a*0.5;
-    cx.fillText(CFG.SUB,CX,CY+lh*1.6);
+    cx.fillStyle="#000";var lh=ms*1.12;
+    cx.fillText(CFG.L1,CX,CY-lh*0.54);cx.fillText(CFG.L2,CX,CY+lh*0.54);
+    var rw=cx.measureText(CFG.L2).width*0.8;cx.fillStyle="#f5f5e9";cx.globalAlpha=a*0.7;cx.fillRect(CX-rw/2,CY+lh*1.08,rw,2.5);
+    var ss=Math.min(W*0.022,H*0.036,26);cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";cx.fillStyle="#000";cx.globalAlpha=a*0.5;cx.fillText(CFG.SUB,CX,CY+lh*1.6);
     cx.restore();
   }
 
-  function drawOrbits() {
+  function drawOrbits(){
     S.rings.forEach(function(ring,ri){
-      ring.angle+=ring.cfg.spd;
-      var rx=W*ring.cfg.rxF, ry=H*ring.cfg.ryF;
+      ring.angle+=ring.cfg.spd;var rx=W*ring.cfg.rxF,ry=H*ring.cfg.ryF;
       ring.items.forEach(function(item){
         item.angle+=ring.cfg.spd;
-        var x=CX+Math.cos(item.angle)*rx, y=CY+Math.sin(item.angle)*ry;
-        var d=(Math.sin(item.angle)+1)/2;
-        var sc=0.7+d*0.3, al=0.22+d*0.72;
-        var ds=ring.items.length>ring.cfg.max*0.75?0.88:1;
-        var fs=ring.cfg.fs*sc*ds;
-        cx.save(); cx.globalAlpha=al;
-        cx.textAlign="center"; cx.textBaseline="middle";
-        var font="";
-        if (ring.cfg.bold)   font="700 ";
-        if (ring.cfg.italic) font="italic ";
-        var ff=ring.cfg.bold
-          ? "\"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif"
-          : "\"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";
-        cx.font=font+fs+"px "+ff;
-        cx.fillStyle="#000";
-        cx.fillText(item.name,x,y);
-        if (ri===0) {
-          var mw=cx.measureText(item.name).width;
-          cx.beginPath(); cx.arc(x-mw/2-10*sc,y,3*sc,0,Math.PI*2);
-          cx.fillStyle="#f5f5e9"; cx.globalAlpha=al*0.9; cx.fill();
-        }
+        var x=CX+Math.cos(item.angle)*rx,y=CY+Math.sin(item.angle)*ry;
+        var d=(Math.sin(item.angle)+1)/2,sc=0.7+d*0.3,al=0.22+d*0.72;
+        var ds=ring.items.length>ring.cfg.max*0.75?0.88:1,fs=ring.cfg.fs*sc*ds;
+        cx.save();cx.globalAlpha=al;cx.textAlign="center";cx.textBaseline="middle";
+        var ff=ring.cfg.bold?"\"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif":"\"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";
+        cx.font=(ring.cfg.bold?"700 ":ring.cfg.italic?"italic ":"")+fs+"px "+ff;
+        cx.fillStyle="#000";cx.fillText(item.name,x,y);
+        if(ri===0){var mw=cx.measureText(item.name).width;cx.beginPath();cx.arc(x-mw/2-10*sc,y,3*sc,0,Math.PI*2);cx.fillStyle="#f5f5e9";cx.globalAlpha=al*0.9;cx.fill();}
         cx.restore();
       });
     });
   }
 
-  // ── POLLING ─────────────────────────────────────────────────
-  function poll() {
-    fetch(SCRIPT+"?action=entries")
-      .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
-      .then(function(data){
+  // ── POLLING via JSONP ─────────────────────────────────────
+  function poll(){
+    jsonp(SCRIPT+"?action=entries", function(err,data){
+      if(!err){
         var fresh=(Array.isArray(data)?data:[]).slice(0,CFG.MAX);
-        if (!fresh.length) {
-          S.phase="idle";
-        } else {
-          if (S.phase==="idle") {
-            S.phase="active";
-            fresh.forEach(addToRing);
-            S.names=fresh;
-          } else { updateNames(fresh); }
+        if(!fresh.length){S.phase="idle";}
+        else{
+          if(S.phase==="idle"){S.phase="active";fresh.forEach(addToRing);S.names=fresh;}
+          else{updateNames(fresh);}
         }
-        clearTimeout(S.poll); S.poll=setTimeout(poll,CFG.POLL_MS);
-      })
-      .catch(function(){ clearTimeout(S.poll); S.poll=setTimeout(poll,8000); });
+      }
+      clearTimeout(S.poll);S.poll=setTimeout(poll,err?8000:CFG.POLL_MS);
+    });
   }
 
-  document.addEventListener("visibilitychange",function(){
-    if (document.hidden) cancelAnimationFrame(S.af);
-    else { draw(); clearTimeout(S.poll); poll(); }
-  });
+  document.addEventListener("visibilitychange",function(){if(document.hidden)cancelAnimationFrame(S.af);else{draw();clearTimeout(S.poll);poll();}});
   window.addEventListener("resize",resize);
-
-  function boot() { resize(); initRings(); S.phase="idle"; draw(); poll(); }
-  document.fonts&&document.fonts.ready ? document.fonts.ready.then(boot) : setTimeout(boot,400);
+  function boot(){resize();initRings();S.phase="idle";draw();poll();}
+  document.fonts&&document.fonts.ready?document.fonts.ready.then(boot):setTimeout(boot,400);
   </script>
 </body>
 </html>
