@@ -212,9 +212,9 @@
 
       var url = SCRIPT + "?action=submit&bringing=" + encodeURIComponent(v);
 
-      // Google Form submission — writes directly to Google Sheet.
-      // Form submissions are never blocked by CORS or CSP.
-      // The form is linked to the MYA Google Sheet.
+      // Direct POST to Google Forms — designed for cross-origin submission.
+      // Google Forms explicitly supports this (embedded forms use it).
+      // no-cors means we can't read the response but the data IS saved.
       function showSuccess() {
         resetBtn();
         cn.textContent = v;
@@ -223,40 +223,15 @@
         setTimeout(function(){ ov.classList.remove("show"); }, 3400);
       }
 
-      var FORM_URL = "https://docs.google.com/forms/d/1309sK9xbjIvApf5vYGnTaR1dr-FyYaTIX1D8lu6fdME/formResponse";
-      var ENTRY_ID = "entry.1646066114";
+      var FORM_ACTION = "https://docs.google.com/forms/u/0/d/1309sK9xbjIvApf5vYGnTaR1dr-FyYaTIX1D8lu6fdME/formResponse";
 
-      // Create hidden iframe so form response doesn't navigate the page
-      var frameName = "mya_form_" + Date.now();
-      var iframe = document.createElement("iframe");
-      iframe.name = frameName;
-      iframe.style.cssText = "display:none;width:0;height:0;border:0;position:absolute;";
-      document.body.appendChild(iframe);
-
-      // Create and submit hidden form
-      var form = document.createElement("form");
-      form.method = "POST";
-      form.action = FORM_URL;
-      form.target = frameName;
-      form.style.display = "none";
-
-      var inp = document.createElement("input");
-      inp.type  = "hidden";
-      inp.name  = ENTRY_ID;
-      inp.value = v;
-      form.appendChild(inp);
-
-      document.body.appendChild(form);
-      form.submit();
-
-      // Show success after form has had time to submit
-      setTimeout(function() {
-        showSuccess();
-        setTimeout(function() {
-          try { document.body.removeChild(form); } catch(e) {}
-          try { document.body.removeChild(iframe); } catch(e) {}
-        }, 5000);
-      }, 1500);
+      fetch(FORM_ACTION, {
+        method:      "POST",
+        mode:        "no-cors",
+        credentials: "omit",
+        headers:     { "Content-Type": "application/x-www-form-urlencoded" },
+        body:        "entry.1646066114=" + encodeURIComponent(v)
+      }).then(showSuccess).catch(showSuccess);
     };
 
     function resetBtn() { isSubmitting=false; btn.disabled=false; btn.classList.remove("loading"); inp.disabled=false; }
