@@ -13,18 +13,20 @@
     :root {
       --green: #c5e59b;
       --cream: #f5f5e9;
+      --bg:    #f5f5e9;   /* cream is now the page background */
+      --surface: #c5e59b; /* green is now the surface/header color */
       --black: #000000;
       --font-d: "Futura Bold","Futura","Josefin Sans","Century Gothic",sans-serif;
       --font-b: "Adobe Aldine Caption","EB Garamond","Garamond",Georgia,serif;
     }
-    html, body { width:100%; height:100%; overflow:hidden; background:var(--green); -webkit-font-smoothing:antialiased; user-select:none; }
-    #bg { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 55% 50% at 15% 18%, rgba(245,245,233,0.22) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 85% 82%, rgba(0,0,0,0.06) 0%, transparent 55%), var(--green); }
-    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:90px; background:var(--cream); border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 60px; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#f5f5e9; -webkit-font-smoothing:antialiased; user-select:none; }
+    #bg { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 55% 50% at 15% 18%, rgba(197,229,155,0.25) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 85% 82%, rgba(197,229,155,0.15) 0%, transparent 55%), #f5f5e9; }
+    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:90px; background:#c5e59b; border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 60px; }
     .hl { font-family:var(--font-d); font-weight:700; font-size:26px; letter-spacing:0.28em; text-transform:uppercase; color:var(--black); }
     .hc { font-family:var(--font-b); font-style:italic; font-size:28px; color:var(--black); opacity:0.7; }
     .hr { font-family:var(--font-d); font-size:18px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); opacity:0.5; }
     #orbitCanvas { position:fixed; top:90px; left:0; right:0; bottom:0; z-index:10; pointer-events:none; }
-    #qrCorner { position:fixed; bottom:36px; left:44px; z-index:50; background:var(--cream); border:2px solid var(--black); border-radius:12px; padding:18px 18px 14px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:10px; }
+    #qrCorner { position:fixed; bottom:36px; left:44px; z-index:50; background:#c5e59b; border:2px solid var(--black); border-radius:12px; padding:18px 18px 14px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:10px; }
     #qrCanvas canvas, #qrCanvas img { display:block; width:160px !important; height:160px !important; border-radius:4px; }
     #qrLabel { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); text-align:center; }
     #qrSub   { font-family:var(--font-b); font-style:italic; font-size:14px; color:var(--black); opacity:0.55; text-align:center; }
@@ -60,7 +62,7 @@
   try {
     new QRCode(document.getElementById("qrCanvas"), {
       text:SUBMIT_URL, width:220, height:220,
-      colorDark:"#000000", colorLight:"#f5f5e9",
+      colorDark:"#000000", colorLight:"#c5e59b",
       correctLevel:QRCode.CorrectLevel.H
     });
   } catch(e) { document.getElementById("qrCorner").style.display="none"; }
@@ -99,9 +101,9 @@
   var CFG = {
     POLL_MS: 15000, MAX:90, HDR:90,
     RINGS:[
-      {rxF:0.22,ryF:0.16,spd:0.0018,max:7, fs:48,bold:true, italic:false},
-      {rxF:0.37,ryF:0.27,spd:0.0012,max:13,fs:38,bold:false,italic:true },
-      {rxF:0.52,ryF:0.37,spd:0.0008,max:22,fs:30,bold:false,italic:false}
+      {rxF:0.22,ryF:0.16,spd:0.0018,max:7, fs:58,bold:true, italic:false},
+      {rxF:0.37,ryF:0.27,spd:0.0012,max:13,fs:46,bold:false,italic:true },
+      {rxF:0.52,ryF:0.37,spd:0.0008,max:22,fs:36,bold:false,italic:false}
     ],
     L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night"
   };
@@ -141,17 +143,17 @@
 
   function drawIdle(){
     S.idle+=0.008;var p=(Math.sin(S.idle)+1)/2;
-    for(var r=0;r<3;r++){var rd=100+r*80+p*25,al=(0.2-r*0.06)*(0.5+p*0.5);cx.beginPath();cx.ellipse(CX,CY,rd*1.65,rd*0.9,0,0,Math.PI*2);cx.strokeStyle="rgba(245,245,233,"+al+")";cx.lineWidth=1.5;cx.stroke();}
+    for(var r=0;r<3;r++){var rd=100+r*80+p*25,al=(0.2-r*0.06)*(0.5+p*0.5);cx.beginPath();cx.ellipse(CX,CY,rd*1.65,rd*0.9,0,0,Math.PI*2);cx.strokeStyle="rgba(197,229,155,"+al*3+")";cx.lineWidth=2;cx.stroke();}
     drawCenter(0.5+p*0.3);
   }
 
   function drawCenter(a){
     cx.save();cx.globalAlpha=a;cx.textAlign="center";cx.textBaseline="middle";
-    var ms=Math.min(W*0.1,H*0.18,140);
+    var ms=Math.min(W*0.07,H*0.12,100);
     cx.font="700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
     cx.fillStyle="#000";var lh=ms*1.12;
     cx.fillText(CFG.L1,CX,CY-lh*0.54);cx.fillText(CFG.L2,CX,CY+lh*0.54);
-    var rw=cx.measureText(CFG.L2).width*0.8;cx.fillStyle="#f5f5e9";cx.globalAlpha=a*0.7;cx.fillRect(CX-rw/2,CY+lh*1.08,rw,2.5);
+    var rw=cx.measureText(CFG.L2).width*0.8;cx.fillStyle="#c5e59b";cx.globalAlpha=a*0.9;cx.fillRect(CX-rw/2,CY+lh*1.08,rw,3);
     var ss=Math.min(W*0.03,H*0.05,40);cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";cx.fillStyle="#000";cx.globalAlpha=a*0.5;cx.fillText(CFG.SUB,CX,CY+lh*1.6);
     cx.restore();
   }
@@ -168,7 +170,7 @@
         var ff=ring.cfg.bold?"\"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif":"\"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";
         cx.font=(ring.cfg.bold?"700 ":ring.cfg.italic?"italic ":"")+fs+"px "+ff;
         cx.fillStyle="#000";cx.fillText(item.name,x,y);
-        if(ri===0){var mw=cx.measureText(item.name).width;cx.beginPath();cx.arc(x-mw/2-10*sc,y,3*sc,0,Math.PI*2);cx.fillStyle="#f5f5e9";cx.globalAlpha=al*0.9;cx.fill();}
+        if(ri===0){var mw=cx.measureText(item.name).width;cx.beginPath();cx.arc(x-mw/2-10*sc,y,3*sc,0,Math.PI*2);cx.fillStyle="#c5e59b";cx.globalAlpha=al*0.9;cx.fill();}
         cx.restore();
       });
     });
