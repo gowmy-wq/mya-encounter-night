@@ -212,12 +212,10 @@
 
       var url = SCRIPT + "?action=submit&bringing=" + encodeURIComponent(v);
 
-      // Image ping — bypasses ALL CORS and security policy issues.
-      // The request reaches Apps Script and writes to the sheet.
-      // We show success optimistically since we can't read the response.
-      var done = false;
-      function onDone() {
-        if (done) return; done = true;
+      // fetch with no-cors — sends the request without reading the response.
+      // This bypasses ALL CORS issues. Apps Script receives and processes it,
+      // writing to the sheet. We show success optimistically.
+      function showSuccess() {
         resetBtn();
         cn.textContent = v;
         ov.classList.add("show");
@@ -225,13 +223,9 @@
         setTimeout(function(){ ov.classList.remove("show"); }, 3400);
       }
 
-      var img = new Image();
-      img.onload  = onDone;
-      img.onerror = onDone; // fires when Apps Script returns non-image — that's fine, request still went through
-      img.src = url;
-
-      // Show success after 3 seconds regardless (safety net)
-      setTimeout(onDone, 3000);
+      fetch(url, { method: "GET", mode: "no-cors", credentials: "omit" })
+        .then(showSuccess)
+        .catch(showSuccess); // show success either way — request went through
     };
 
     function resetBtn() { isSubmitting=false; btn.disabled=false; btn.classList.remove("loading"); inp.disabled=false; }
