@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#c5e59b"/>
+  <title>MYA — Encounter Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --green: #c5e59b;
+      --cream: #f5f5e9;
+      --black: #000000;
+      --font-d: "Futura Bold","Futura","Josefin Sans","Century Gothic",sans-serif;
+      --font-b: "Adobe Aldine Caption","EB Garamond","Garamond",Georgia,serif;
+    }
+    html, body {
+      min-height:100%; background:var(--green);
+      font-family:var(--font-b); color:var(--black);
+      -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse at 25% 10%, rgba(245,245,233,0.22) 0%, transparent 50%),
+        radial-gradient(ellipse at 75% 90%, rgba(0,0,0,0.05) 0%, transparent 55%);
+    }
+    .page {
+      position:relative; z-index:1; min-height:100dvh;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:36px 24px 52px;
+    }
+    .card {
+      width:100%; max-width:460px;
+      background:var(--cream);
+      border:2px solid var(--black); border-radius:20px;
+      padding:48px 36px 44px;
+      box-shadow:5px 5px 0 var(--black);
+      animation:cardIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from{opacity:0;transform:translateY(24px) scale(0.97);}
+      to  {opacity:1;transform:translateY(0) scale(1);}
+    }
+    .badge {
+      display:flex; align-items:center;
+      justify-content:center; gap:14px; margin-bottom:30px;
+    }
+    .badge-line { flex:1; max-width:44px; height:1.5px; background:var(--black); opacity:0.2; }
+    .badge-text {
+      font-family:var(--font-d); font-size:11px; font-weight:700;
+      letter-spacing:0.32em; text-transform:uppercase; color:var(--black);
+    }
+    .title {
+      font-family:var(--font-d); font-weight:700;
+      font-size:clamp(32px,9vw,44px);
+      line-height:1.05; letter-spacing:0.06em; text-transform:uppercase;
+      color:var(--black); text-align:center; margin-bottom:8px;
+    }
+    .subtitle {
+      font-family:var(--font-b); font-style:italic;
+      font-size:clamp(15px,3.8vw,18px);
+      color:var(--black); opacity:0.5;
+      text-align:center; margin-bottom:34px;
+    }
+    .sentence-wrap {
+      background:var(--green); border:1.5px solid var(--black);
+      border-radius:12px; padding:18px 22px; margin-bottom:26px;
+    }
+    .sentence {
+      font-family:var(--font-b); font-size:clamp(16px,4.2vw,20px);
+      color:var(--black); line-height:1.65; text-align:center;
+    }
+    .ph { opacity:0.35; font-style:italic; transition:opacity 0.25s ease; }
+    .ph.filled { opacity:1; font-style:normal; font-weight:500; }
+    .input-label {
+      display:block; font-family:var(--font-d);
+      font-size:11px; font-weight:700;
+      letter-spacing:0.22em; text-transform:uppercase;
+      color:var(--black); opacity:0.5; margin-bottom:10px;
+    }
+    .input-field {
+      width:100%; padding:16px 18px;
+      font-family:var(--font-b); font-size:18px;
+      color:var(--black); background:var(--cream);
+      border:2px solid var(--black); border-radius:12px;
+      outline:none; transition:box-shadow 0.2s ease;
+      -webkit-appearance:none; caret-color:var(--black);
+    }
+    .input-field::placeholder { color:var(--black); opacity:0.28; font-style:italic; }
+    .input-field:focus { box-shadow:4px 4px 0 var(--black); }
+    .input-field:disabled { opacity:0.45; cursor:not-allowed; }
+    .input-feedback {
+      min-height:22px; margin-top:7px;
+      font-family:var(--font-b); font-style:italic;
+      font-size:13px; color:var(--black); opacity:0.5;
+    }
+    .input-feedback.error { opacity:1; }
+    .char-count {
+      text-align:right; font-family:var(--font-d);
+      font-size:10px; letter-spacing:0.06em;
+      color:var(--black); opacity:0.3; margin-top:5px;
+    }
+    .char-count.warn { opacity:0.85; }
+    .submit-btn {
+      width:100%; margin-top:26px; padding:18px 24px;
+      font-family:var(--font-d); font-size:15px; font-weight:700;
+      letter-spacing:0.14em; text-transform:uppercase;
+      color:var(--black); background:var(--green);
+      border:2px solid var(--black); border-radius:12px;
+      cursor:pointer; box-shadow:4px 4px 0 var(--black);
+      transition:transform 0.15s ease, box-shadow 0.15s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .submit-btn:active:not(:disabled) { transform:translate(2px,2px); box-shadow:2px 2px 0 var(--black); }
+    .submit-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+    .btn-inner { display:flex; align-items:center; justify-content:center; gap:10px; }
+    .btn-spinner {
+      display:none; width:16px; height:16px;
+      border:2.5px solid rgba(0,0,0,0.2); border-top-color:var(--black);
+      border-radius:50%; animation:spin 0.7s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg);} }
+    .submit-btn.loading .btn-spinner { display:block; }
+    .submit-btn.loading .btn-label  { opacity:0.6; }
+    .message-area {
+      margin-top:18px; min-height:44px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .message {
+      padding:13px 18px; font-family:var(--font-b); font-size:14px;
+      text-align:center; line-height:1.45; width:100%; border-radius:10px;
+      opacity:0; transform:translateY(5px);
+      transition:opacity 0.3s ease, transform 0.3s ease;
+    }
+    .message.show  { opacity:1; transform:translateY(0); }
+    .message.success { background:var(--green); border:1.5px solid var(--black); color:var(--black); }
+    .message.error   { background:var(--cream); border:1.5px solid var(--black); color:var(--black); }
+    .confirm-overlay {
+      position:fixed; inset:0; z-index:100;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:48px 28px; background:var(--green);
+      opacity:0; pointer-events:none; transition:opacity 0.45s ease;
+    }
+    .confirm-overlay.show { opacity:1; pointer-events:all; }
+    .confirm-circle {
+      width:72px; height:72px; background:var(--cream);
+      border:2.5px solid var(--black); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:24px; box-shadow:4px 4px 0 var(--black);
+      animation:popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes popIn { from{transform:scale(0.3);opacity:0;} to{transform:scale(1);opacity:1;} }
+    .confirm-circle svg { width:32px; height:32px; stroke:var(--black); fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .confirm-title { font-family:var(--font-d); font-weight:700; font-size:clamp(28px,7vw,40px); text-transform:uppercase; letter-spacing:0.06em; color:var(--black); text-align:center; line-height:1.05; margin-bottom:12px; }
+    .confirm-sub { font-family:var(--font-b); font-style:italic; font-size:15px; color:var(--black); opacity:0.6; text-align:center; margin-bottom:32px; }
+    .confirm-sentence { font-family:var(--font-b); font-size:clamp(15px,3.8vw,19px); font-style:italic; color:var(--black); text-align:center; background:var(--cream); border:2px solid var(--black); border-radius:12px; padding:20px 26px; line-height:1.65; max-width:380px; box-shadow:3px 3px 0 var(--black); }
+    .confirm-sentence strong { font-style:normal; font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-circle">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 class="confirm-title">You're Bringing<br/>Someone!</h2>
+    <p class="confirm-sub">Your invitation is on the wall.</p>
+    <div class="confirm-sentence">
+      I'm bringing <strong id="confirmName"></strong> to Encounter Night
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="card">
+      <div class="badge">
+        <div class="badge-line"></div>
+        <span class="badge-text">MYA &nbsp;·&nbsp; Encounter Night</span>
+        <div class="badge-line"></div>
+      </div>
+      <h1 class="title">Who Are<br/>You Bringing?</h1>
+      <p class="subtitle">Scan. Type. Show up together.</p>
+      <div class="sentence-wrap">
+        <p class="sentence">
+          <span>I'm bringing </span><span class="ph" id="livePreview">___</span><span> to Encounter Night</span>
+        </p>
+      </div>
+      <label class="input-label" for="bringingInput">Their name(s)</label>
+      <input class="input-field" type="text" id="bringingInput"
+        placeholder="e.g. Jordan, or my roommate Sam"
+        maxlength="50" autocomplete="off" autocorrect="off"
+        autocapitalize="words" spellcheck="false" inputmode="text"/>
+      <div class="char-count" id="charCount">0 / 50</div>
+      <div class="input-feedback" id="inputFeedback"></div>
+      <button class="submit-btn" id="submitBtn" type="button">
+        <span class="btn-inner">
+          <span class="btn-spinner"></span>
+          <span class="btn-label">Add to the Wall</span>
+        </span>
+      </button>
+      <div class="message-area">
+        <div class="message" id="msgBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── YOUR APPS SCRIPT URL ─────────────────────────────────
+    var SCRIPT = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
+
+    // ── VALIDATION ───────────────────────────────────────────
+    var NAME_RX = /^[a-zA-ZÀ-ÖØ-öø-ÿ\s\-\'\.]+$/;
+    var BAD = ["fuck","shit","bitch","asshole","ass","dick","cock","pussy","cunt",
+      "whore","slut","piss","fag","nigger","nigga","spic","chink","kike","retard",
+      "poop","poopy","turd","pee","fart","butt","penis","vagina","boob","tits",
+      "sex","idiot","moron","dumb","stupid","loser","asdf","qwerty","blah"];
+
+    function blocked(v) {
+      var l = v.toLowerCase();
+      for (var i=0;i<BAD.length;i++) {
+        if (new RegExp("(?:^|[^a-z])"+BAD[i]+"(?:[^a-z]|$)","i").test(l)) return true;
+      }
+      return false;
+    }
+    function validate(v) {
+      if (!v) return {ok:false,msg:""};
+      if (!NAME_RX.test(v)) return {ok:false,msg:"Letters only — no numbers or symbols."};
+      if (blocked(v))       return {ok:false,msg:"Please enter a real name."};
+      if ((v.match(/[a-zA-ZÀ-ÖØ-öø-ÿ]/g)||[]).length < 2) return {ok:false,msg:"Please enter at least 2 letters."};
+      return {ok:true,msg:""};
+    }
+
+    // ── ELEMENTS ─────────────────────────────────────────────
+    var MAX=50, isSubmitting=false;
+    var inp  = document.getElementById("bringingInput");
+    var prev = document.getElementById("livePreview");
+    var cc   = document.getElementById("charCount");
+    var fb   = document.getElementById("inputFeedback");
+    var btn  = document.getElementById("submitBtn");
+    var msg  = document.getElementById("msgBox");
+    var ov   = document.getElementById("confirmOverlay");
+    var cn   = document.getElementById("confirmName");
+
+    inp.addEventListener("input", function() {
+      var v=inp.value.trim(), r=inp.value;
+      prev.textContent = v||"___";
+      prev.classList.toggle("filled", v.length>0);
+      cc.textContent = r.length+" / "+MAX;
+      cc.classList.toggle("warn", r.length>=MAX*0.85);
+      if (!v) { setFb("",""); btn.disabled=false; return; }
+      var res=validate(v);
+      if (!res.ok&&res.msg) { setFb(res.msg,"error"); btn.disabled=true; }
+      else { setFb("",""); btn.disabled=false; }
+    });
+
+    function setFb(m,t) { fb.textContent=m; fb.className="input-feedback"+(t?" "+t:""); }
+
+    btn.onclick = function() {
+      if (isSubmitting) return;
+      var v=inp.value.trim();
+      if (!v) { showMsg("Please enter a name first.","error"); inp.focus(); return; }
+      var res=validate(v);
+      if (!res.ok) { showMsg(res.msg||"Please enter a valid name.","error"); return; }
+
+      isSubmitting=true; btn.disabled=true; btn.classList.add("loading");
+      inp.disabled=true; hideMsg();
+
+      fetch(SCRIPT+"?action=submit&bringing="+encodeURIComponent(v))
+        .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+        .then(function(d) {
+          resetBtn();
+          if (d&&d.success) { cn.textContent=inp.value.trim(); ov.classList.add("show"); resetForm(); setTimeout(function(){ov.classList.remove("show");},3400); }
+          else showMsg((d&&d.message)||"Something went wrong.","error");
+        })
+        .catch(function(){ resetBtn(); showMsg("Connection issue — please try again.","error"); });
+    };
+
+    function resetBtn() { isSubmitting=false; btn.disabled=false; btn.classList.remove("loading"); inp.disabled=false; }
+    function resetForm() { inp.value=""; prev.textContent="___"; prev.classList.remove("filled"); cc.textContent="0 / "+MAX; cc.classList.remove("warn"); setFb("",""); }
+    var mt;
+    function showMsg(t,type) { clearTimeout(mt); msg.textContent=t; msg.className="message "+type+" show"; if(type==="error") mt=setTimeout(hideMsg,5500); }
+    function hideMsg() { msg.classList.remove("show"); }
+  </script>
+</body>
+</html>
