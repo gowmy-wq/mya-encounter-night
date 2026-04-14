@@ -100,22 +100,49 @@
   // ── CONFIG ────────────────────────────────────────────────
   var CFG = {
     POLL_MS:    15000,
-    MAX:        500,      // store up to 500 names in memory
+    MAX:        500,
     HDR:        90,
-    ROTATE_MS:  8000,     // rotate new names into view every 8 seconds
+    ROTATE_MS:  8000,
 
-    // All rings use same font — Adobe Aldine Caption, no bold/italic variation
-    // ryF kept tight so names never overlap the header banner
     RINGS:[
       {rxF:0.20,ryF:0.13,spd:0.0018,slots:7 },
       {rxF:0.34,ryF:0.22,spd:0.0012,slots:13},
       {rxF:0.48,ryF:0.30,spd:0.0008,slots:22}
     ],
-    // Single consistent font size per ring — same typeface throughout
     FONT_SIZES: [52, 40, 30],
     FONT: "\"Adobe Aldine Caption\",\"EB Garamond\",\"Garamond\",Georgia,serif",
-    L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night"
+    L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night",
+
+    // Padding around center text block (px) — names within this zone are skipped
+    CENTER_PAD_X: 80,
+    CENTER_PAD_Y: 60
   };
+
+  // Calculates the bounding box of the centerpiece text so we can
+  // skip drawing any name whose position falls inside it.
+  // Returns { x, y, w, h } in canvas coordinates.
+  function getCenterBox() {
+    var ms  = Math.min(W*0.07, H*0.12, 100);
+    var lh  = ms * 1.12;
+    var ss  = Math.min(W*0.03, H*0.05, 40);
+
+    // Measure widest line
+    cx.font = "700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
+    var w1 = cx.measureText(CFG.L1).width;
+    var w2 = cx.measureText(CFG.L2).width;
+    var maxW = Math.max(w1, w2);
+
+    // Top of L1 text, bottom of subtitle
+    var top    = CY - lh*0.54 - ms*0.6;
+    var bottom = CY + lh*1.6  + ss*0.6;
+
+    return {
+      x: CX - maxW/2 - CFG.CENTER_PAD_X,
+      y: top  - CFG.CENTER_PAD_Y,
+      w: maxW + CFG.CENTER_PAD_X*2,
+      h: (bottom - top) + CFG.CENTER_PAD_Y*2
+    };
+  }
 
   var S={
     names:[],        // all names fetched
@@ -232,6 +259,9 @@
   }
 
   function drawOrbits(){
+    // Calculate center exclusion zone once per frame
+    var box = getCenterBox();
+
     S.rings.forEach(function(ring){
       ring.angle += ring.cfg.spd;
       var rx=W*ring.cfg.rxF, ry=H*ring.cfg.ryF;
@@ -240,7 +270,12 @@
         var x=CX+Math.cos(item.angle)*rx;
         var y=CY+Math.sin(item.angle)*ry;
 
-        // Depth effect: names at front = full size/opacity, back = smaller/dimmer
+        // ── SKIP if name position falls inside the center text zone ──
+        if (x >= box.x && x <= box.x+box.w &&
+            y >= box.y && y <= box.y+box.h) {
+          return; // don't draw — name passes behind the centerpiece
+        }
+
         var depth=(Math.sin(item.angle)+1)/2;
         var sc=0.72+depth*0.28;
         var al=0.25+depth*0.7;
@@ -250,8 +285,6 @@
         cx.globalAlpha=al;
         cx.textAlign="center";
         cx.textBaseline="middle";
-
-        // ── SAME FONT for every name in every ring ──────────
         cx.font=fs+"px "+CFG.FONT;
         cx.fillStyle="#000";
         cx.fillText(item.name,x,y);
