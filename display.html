@@ -52,8 +52,8 @@
   </div>
 
   <script>
-  var SCRIPT     = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
-  var SUBMIT_URL = window.location.origin + "/";
+  var SCRIPT   = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
+  var SHEET_ID = "1gjVnQX7RogIWxRqoFJ8439x6JoPQTlvhG9kk1DsfVC4";
 
   // ── QR CODE ───────────────────────────────────────────────
   try {
@@ -173,19 +173,76 @@
     });
   }
 
-  // ── POLLING via JSONP ─────────────────────────────────────
-  function poll(){
-    jsonp(SCRIPT+"?action=entries", function(err,data){
-      if(!err){
-        var fresh=(Array.isArray(data)?data:[]).slice(0,CFG.MAX);
-        if(!fresh.length){S.phase="idle";}
-        else{
-          if(S.phase==="idle"){S.phase="active";fresh.forEach(addToRing);S.names=fresh;}
-          else{updateNames(fresh);}
-        }
+  // ── POLLING via Google Sheets gviz/tq API ────────────────
+  // Reads directly from the sheet using Google's own JSONP API.
+  // Requires sheet to be shared as "Anyone with link can view".
+  // No Apps Script redirect involved — bypasses CORS entirely.
+  function poll() {
+    var cbName = "mya_gviz_" + Date.now();
+    var script = document.createElement("script");
+    var done   = false;
+
+    window[cbName] = function(data) {
+      if (done) return; done = true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+
+      // Parse gviz response — column B (index 1) is "Bringing"
+      var names = [];
+      if (data && data.table && data.table.rows) {
+        data.table.rows.forEach(function(row) {
+          if (row.c && row.c[1] && row.c[1].v) {
+            names.push(row.c[1].v.toString().trim());
+          }
+        });
+        names.reverse(); // sheet is oldest-first, we want newest-first
       }
-      clearTimeout(S.poll);S.poll=setTimeout(poll,err?8000:CFG.POLL_MS);
-    });
+
+      handleEntries(names);
+      clearTimeout(S.poll);
+      S.poll = setTimeout(poll, CFG.POLL_MS);
+    };
+
+    script.onerror = function() {
+      if (done) return; done = true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      clearTimeout(S.poll);
+      S.poll = setTimeout(poll, 8000);
+    };
+
+    // Timeout fallback
+    setTimeout(function() {
+      if (!done) {
+        done = true; delete window[cbName];
+        try { document.head.removeChild(script); } catch(e) {}
+        clearTimeout(S.poll);
+        S.poll = setTimeout(poll, 8000);
+      }
+    }, 10000);
+
+    // Google Visualization JSONP — works with publicly shared sheets
+    script.src = "https://docs.google.com/spreadsheets/d/"
+      + SHEET_ID
+      + "/gviz/tq?tqx=out:json;responseHandler:"
+      + cbName
+      + "&sheet=Submissions";
+    document.head.appendChild(script);
+  }
+
+  function handleEntries(fresh) {
+    fresh = (Array.isArray(fresh) ? fresh : []).slice(0, CFG.MAX);
+    if (!fresh.length) {
+      S.phase = "idle";
+    } else {
+      if (S.phase === "idle") {
+        S.phase = "active";
+        fresh.forEach(addToRing);
+        S.names = fresh;
+      } else {
+        updateNames(fresh);
+      }
+    }
   }
 
   document.addEventListener("visibilitychange",function(){if(document.hidden)cancelAnimationFrame(S.af);else{draw();clearTimeout(S.poll);poll();}});
