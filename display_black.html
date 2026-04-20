@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MYA — Encounter Night</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --green: #c5e59b;
+      --cream: #f5f5e9;
+      --bg:    #f5f5e9;   /* cream is now the page background */
+      --surface: #c5e59b; /* green is now the surface/header color */
+      --black: #000000;
+      --font-d: "Futura Bold","Futura","Josefin Sans","Century Gothic",sans-serif;
+      --font-b: "Adobe Aldine Caption","EB Garamond","Garamond",Georgia,serif;
+    }
+    html, body { width:100%; height:100%; overflow:hidden; background:#000000; -webkit-font-smoothing:antialiased; user-select:none; }
+    #bg { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 55% 50% at 15% 18%, rgba(197,229,155,0.25) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 85% 82%, rgba(197,229,155,0.15) 0%, transparent 55%), #000000; }
+    #header { position:fixed; top:0; left:0; right:0; z-index:40; height:90px; background:#c5e59b; border-bottom:2.5px solid var(--black); display:flex; align-items:center; justify-content:space-between; padding:0 60px; }
+    .hl { font-family:var(--font-d); font-weight:700; font-size:26px; letter-spacing:0.28em; text-transform:uppercase; color:var(--black); }
+    .hc { font-family:var(--font-b); font-style:italic; font-size:28px; color:var(--black); opacity:0.7; }
+    .hr { font-family:var(--font-d); font-size:18px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); opacity:0.5; }
+    #orbitCanvas { position:fixed; top:90px; left:0; right:0; bottom:0; z-index:10; pointer-events:none; }
+    #qrCorner { position:fixed; bottom:36px; left:44px; z-index:50; background:#c5e59b; border:2px solid var(--black); border-radius:12px; padding:18px 18px 14px; box-shadow:4px 4px 0 var(--black); display:flex; flex-direction:column; align-items:center; gap:10px; }
+    #qrCanvas canvas, #qrCanvas img { display:block; width:160px !important; height:160px !important; border-radius:4px; }
+    #qrLabel { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--black); text-align:center; }
+    #qrSub   { font-family:var(--font-b); font-style:italic; font-size:14px; color:var(--black); opacity:0.55; text-align:center; }
+    #badge   { position:fixed; bottom:28px; right:36px; z-index:50; display:flex; align-items:center; gap:10px; opacity:0.4; }
+    .bl { width:24px; height:2px; background:var(--black); }
+    .bt { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:0.3em; text-transform:uppercase; color:var(--black); }
+  </style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div id="header">
+    <div class="hl">MYA</div>
+    <div class="hc">Encounter Night</div>
+    <div class="hr">Empowered to share the gospel</div>
+  </div>
+  <canvas id="orbitCanvas"></canvas>
+  <div id="qrCorner">
+    <div id="qrCanvas"></div>
+    <div id="qrLabel">Scan to Submit</div>
+    <div id="qrSub">Add your name to the wall</div>
+  </div>
+  <div id="badge">
+    <div class="bl"></div>
+    <span class="bt">MYA</span>
+  </div>
+
+  <script>
+  var SCRIPT     = "https://script.google.com/macros/s/AKfycbyRqJanpSSXrWrZA170NYbfiaF_9Mm9f6uZJB9RfrDBvopwx0OjjeiBBrDT9j8m88yU/exec";
+  var SHEET_ID   = "1gjVnQX7RogIWxRqoFJ8439x6JoPQTlvhG9kk1DsfVC4";
+  var SUBMIT_URL = "https://gowmy-wq.github.io/mya-encounter-night/";
+
+  // ── QR CODE ───────────────────────────────────────────────
+  try {
+    new QRCode(document.getElementById("qrCanvas"), {
+      text:SUBMIT_URL, width:220, height:220,
+      colorDark:"#000000", colorLight:"#c5e59b",
+      correctLevel:QRCode.CorrectLevel.H
+    });
+  } catch(e) { document.getElementById("qrCorner").style.display="none"; }
+
+  // ── JSONP helper ──────────────────────────────────────────
+  function jsonp(url, callback) {
+    var cbName = "mya_cb_" + Date.now();
+    var script = document.createElement("script");
+    var done   = false;
+
+    window[cbName] = function(data) {
+      if (done) return; done=true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      callback(null, data);
+    };
+    script.onerror = function() {
+      if (done) return; done=true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      callback(new Error("failed"), null);
+    };
+    setTimeout(function() {
+      if (!done) {
+        done=true; delete window[cbName];
+        try { document.head.removeChild(script); } catch(e) {}
+        callback(new Error("timeout"), null);
+      }
+    }, 10000);
+
+    script.src = url + "&callback=" + cbName;
+    document.head.appendChild(script);
+  }
+
+  // ── CONFIG ────────────────────────────────────────────────
+  var CFG = {
+    POLL_MS:    15000,
+    MAX:        500,
+    HDR:        90,
+    ROTATE_MS:  8000,
+
+    RINGS:[
+      {rxF:0.20,ryF:0.13,spd:0.0018,slots:7 },
+      {rxF:0.34,ryF:0.22,spd:0.0012,slots:13},
+      {rxF:0.48,ryF:0.30,spd:0.0008,slots:22}
+    ],
+    FONT_SIZES: [52, 40, 30],
+    FONT: "\"Adobe Aldine Caption\",\"EB Garamond\",\"Garamond\",Georgia,serif",
+    L1:"WHO ARE YOU", L2:"BRINGING?", SUB:"MYA  ·  Encounter Night",
+
+    // Padding around center text block (px) — names within this zone are skipped
+    CENTER_PAD_X: 80,
+    CENTER_PAD_Y: 60
+  };
+
+  // Calculates the bounding box of the centerpiece text so we can
+  // skip drawing any name whose position falls inside it.
+  // Returns { x, y, w, h } in canvas coordinates.
+  function getCenterBox() {
+    var ms  = Math.min(W*0.07, H*0.12, 100);
+    var lh  = ms * 1.12;
+    var ss  = Math.min(W*0.03, H*0.05, 40);
+
+    // Measure widest line
+    cx.font = "700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
+    var w1 = cx.measureText(CFG.L1).width;
+    var w2 = cx.measureText(CFG.L2).width;
+    var maxW = Math.max(w1, w2);
+
+    // Top of L1 text, bottom of subtitle
+    var top    = CY - lh*0.54 - ms*0.6;
+    var bottom = CY + lh*1.6  + ss*0.6;
+
+    return {
+      x: CX - maxW/2 - CFG.CENTER_PAD_X,
+      y: top  - CFG.CENTER_PAD_Y,
+      w: maxW + CFG.CENTER_PAD_X*2,
+      h: (bottom - top) + CFG.CENTER_PAD_Y*2
+    };
+  }
+
+  var S={
+    names:[],        // all names fetched
+    rings:[],        // ring state objects
+    phase:"idle",
+    poll:null, af:null, idle:0,
+    rotateTimer:null,
+    offset:0         // cycling offset into S.names array
+  };
+
+  var cv=document.getElementById("orbitCanvas");
+  var cx=cv.getContext("2d");
+  var W,H,CX,CY;
+
+  function resize(){
+    W=window.innerWidth;
+    H=window.innerHeight-CFG.HDR;
+    cv.width=W; cv.height=H;
+    CX=W/2; CY=H/2;
+    rebuildRings();
+  }
+
+  function initRings(){
+    S.rings=CFG.RINGS.map(function(c,i){
+      return {cfg:c, fs:CFG.FONT_SIZES[i], items:[], angle:0};
+    });
+  }
+
+  // ── ROTATION: cycles all 500 names through visible slots ──
+  // Every ROTATE_MS, shift the offset so a fresh batch of names
+  // replaces the current ones in the rings. All entries get shown
+  // over time even if there are hundreds of them.
+  function assignNamesToRings() {
+    if (!S.names.length) return;
+    var offset = S.offset;
+    S.rings.forEach(function(ring) {
+      ring.items = [];
+      var n = ring.cfg.slots;
+      for (var i=0; i<n; i++) {
+        var name = S.names[(offset + i) % S.names.length];
+        ring.items.push({ name:name, angle: ring.angle + (i/n)*Math.PI*2 });
+      }
+      offset += ring.cfg.slots;
+    });
+  }
+
+  function startRotation() {
+    clearTimeout(S.rotateTimer);
+    S.rotateTimer = setTimeout(function rotate() {
+      if (S.phase !== "active") return;
+      // Advance offset by total visible slots so next batch shows
+      var totalSlots = CFG.RINGS.reduce(function(a,r){ return a+r.slots; },0);
+      S.offset = (S.offset + totalSlots) % Math.max(1, S.names.length);
+      assignNamesToRings();
+      S.rotateTimer = setTimeout(rotate, CFG.ROTATE_MS);
+    }, CFG.ROTATE_MS);
+  }
+
+  function rebuildRings() {
+    if (!S.rings.length) { initRings(); return; }
+    // Preserve current angles, just reassign names
+    if (S.names.length) assignNamesToRings();
+  }
+
+  function updateNames(fresh) {
+    S.names = fresh.slice(0, CFG.MAX);
+    assignNamesToRings();
+  }
+
+  function draw(){
+    // Clip canvas so nothing draws above it (prevents any header bleed)
+    cx.clearRect(0,0,W,H);
+    cx.save();
+    cx.beginPath();
+    cx.rect(0,0,W,H);
+    cx.clip();
+    if(S.phase==="idle") drawIdle();
+    else { drawOrbits(); drawCenter(1); }
+    cx.restore();
+    S.af=requestAnimationFrame(draw);
+  }
+
+  function drawIdle(){
+    S.idle+=0.008; var p=(Math.sin(S.idle)+1)/2;
+    for(var r=0;r<3;r++){
+      var rd=80+r*70+p*20, al=(0.2-r*0.06)*(0.5+p*0.5);
+      cx.beginPath();
+      cx.ellipse(CX,CY,rd*1.65,rd*0.9,0,0,Math.PI*2);
+      cx.strokeStyle="rgba(197,229,155,"+(al*3)+")";
+      cx.lineWidth=2; cx.stroke();
+    }
+    drawCenter(0.5+p*0.3);
+  }
+
+  function drawCenter(a){
+    cx.save(); cx.globalAlpha=a;
+    cx.textAlign="center"; cx.textBaseline="middle";
+    var ms=Math.min(W*0.07,H*0.12,100);
+    cx.font="700 "+ms+"px \"Futura Bold\",\"Futura\",\"Josefin Sans\",sans-serif";
+    cx.fillStyle="#ffffff";
+    var lh=ms*1.12;
+    cx.fillText(CFG.L1,CX,CY-lh*0.54);
+    cx.fillText(CFG.L2,CX,CY+lh*0.54);
+    // Green rule
+    var rw=cx.measureText(CFG.L2).width*0.8;
+    cx.fillStyle="#c5e59b"; cx.globalAlpha=a*0.9;
+    cx.fillRect(CX-rw/2,CY+lh*1.08,rw,3);
+    // Subtitle
+    var ss=Math.min(W*0.03,H*0.05,40);
+    cx.font="italic "+ss+"px \"Adobe Aldine Caption\",\"EB Garamond\",Georgia,serif";
+    cx.fillStyle="#ffffff"; cx.globalAlpha=a*0.5;
+    cx.fillText(CFG.SUB,CX,CY+lh*1.6);
+    cx.restore();
+  }
+
+  function drawOrbits(){
+    // Calculate center exclusion zone once per frame
+    var box = getCenterBox();
+
+    S.rings.forEach(function(ring){
+      ring.angle += ring.cfg.spd;
+      var rx=W*ring.cfg.rxF, ry=H*ring.cfg.ryF;
+      ring.items.forEach(function(item){
+        item.angle += ring.cfg.spd;
+        var x=CX+Math.cos(item.angle)*rx;
+        var y=CY+Math.sin(item.angle)*ry;
+
+        // ── SKIP if name position falls inside the center text zone ──
+        if (x >= box.x && x <= box.x+box.w &&
+            y >= box.y && y <= box.y+box.h) {
+          return; // don't draw — name passes behind the centerpiece
+        }
+
+        var depth=(Math.sin(item.angle)+1)/2;
+        var sc=0.72+depth*0.28;
+        var al=0.25+depth*0.7;
+        var fs=ring.fs*sc;
+
+        cx.save();
+        cx.globalAlpha=al;
+        cx.textAlign="center";
+        cx.textBaseline="middle";
+        cx.font=fs+"px "+CFG.FONT;
+        cx.fillStyle="#ffffff";
+        cx.fillText(item.name,x,y);
+        cx.restore();
+      });
+    });
+  }
+
+  // ── POLLING via Google Sheets gviz/tq API ────────────────
+  // Reads directly from the sheet using Google's own JSONP API.
+  // Requires sheet to be shared as "Anyone with link can view".
+  // No Apps Script redirect involved — bypasses CORS entirely.
+  function poll() {
+    var cbName = "mya_gviz_" + Date.now();
+    var script = document.createElement("script");
+    var done   = false;
+
+    window[cbName] = function(data) {
+      if (done) return; done = true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+
+      // Parse gviz response — column B (index 1) is "Bringing"
+      var names = [];
+      if (data && data.table && data.table.rows) {
+        data.table.rows.forEach(function(row) {
+          if (row.c && row.c[1] && row.c[1].v) {
+            names.push(row.c[1].v.toString().trim());
+          }
+        });
+        names.reverse(); // sheet is oldest-first, we want newest-first
+      }
+
+      handleEntries(names);
+      clearTimeout(S.poll);
+      S.poll = setTimeout(poll, CFG.POLL_MS);
+    };
+
+    script.onerror = function() {
+      if (done) return; done = true;
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch(e) {}
+      clearTimeout(S.poll);
+      S.poll = setTimeout(poll, 8000);
+    };
+
+    // Timeout fallback
+    setTimeout(function() {
+      if (!done) {
+        done = true; delete window[cbName];
+        try { document.head.removeChild(script); } catch(e) {}
+        clearTimeout(S.poll);
+        S.poll = setTimeout(poll, 8000);
+      }
+    }, 10000);
+
+    // Google Visualization JSONP — works with publicly shared sheets
+    script.src = "https://docs.google.com/spreadsheets/d/"
+      + SHEET_ID
+      + "/gviz/tq?tqx=out:json;responseHandler:"
+      + cbName
+      + "&sheet=Form%20Responses%201";
+    document.head.appendChild(script);
+  }
+
+  function handleEntries(fresh) {
+    fresh = (Array.isArray(fresh) ? fresh : []).slice(0, CFG.MAX);
+    if (!fresh.length) {
+      S.phase = "idle";
+    } else {
+      S.names = fresh;
+      if (S.phase === "idle") {
+        S.phase = "active";
+        S.offset = 0;
+        assignNamesToRings();
+        startRotation();
+      } else {
+        // Update pool — rotation continues naturally
+        assignNamesToRings();
+      }
+    }
+  }
+
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden){
+      cancelAnimationFrame(S.af);
+      clearTimeout(S.rotateTimer);
+    } else {
+      draw();
+      clearTimeout(S.poll);
+      poll();
+      if(S.phase==="active") startRotation();
+    }
+  });
+  window.addEventListener("resize",resize);
+  function boot(){resize();initRings();S.phase="idle";draw();poll();}
+  document.fonts&&document.fonts.ready?document.fonts.ready.then(boot):setTimeout(boot,400);
+  </script>
+</body>
+</html>
